@@ -1,8 +1,8 @@
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 from .task import Task
-from .types import Tasks, Results
 from .queue import TaskQueue
+from .types import Results, Tasks
 
 
 class TaskHandler(object):
@@ -17,7 +17,7 @@ class TaskHandler(object):
         return await self.func(*args)
 
     async def get(self, *args: Any) -> Any:
-        task = Task(self.name, args)
+        task = Task(self.name, args, queue_name=self.queue.name)
         self.queue.put_task(task)
 
         return await self.results[task.id].get()

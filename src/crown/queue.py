@@ -3,19 +3,21 @@ from structlog import get_logger
 from typing import Set, Coroutine
 
 from .task import Task, TaskStatus
-from .types import Results
+from .types import Results, QueueName, QueueNameType
 
 log = get_logger()
 
 
 class TaskQueue(object):
-    def __init__(self, results: Results) -> None:
-        self.queue: asyncio.Queue[Task] = asyncio.Queue()
+    def __init__(self, results: Results, name: QueueNameType = QueueName.DEFAULT) -> None:
         self.results = results
+        self.name = name
+
+        self.queue: asyncio.Queue[Task] = asyncio.Queue()
         self.active: Set[Task] = set()
 
     def put_task(self, task: Task) -> None:
-        log.info("Queueing task", task=task)
+        log.info("Queueing task", task=task, queue_name=self.name)
         self.results[task.id] = asyncio.Queue()
         self.active.add(task)
         task.status = TaskStatus.QUEUED

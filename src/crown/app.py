@@ -1,33 +1,28 @@
 import asyncio
+import uvicorn
 from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import Any, List, Set
+from typing import Any, Set
 from structlog import get_logger
 
 from .crown import Crown
 from .task import Task
+from .types import TaskBody
 
 log = get_logger()
 app = FastAPI(debug=True)
 crown = Crown()
 
 
-async def worker() -> None:
-    log.msg("Starting worker")
+async def worker(queue_name: str) -> None:
+    log.msg("Starting worker", queue_name=queue_name)
     while True:
-        task: Task = await crown.queue.get_task()
+        task: Task = await crown.queues[queue_name].get_task()
         await crown.process_task(task)
-
-
-class TaskBody(BaseModel):
-    name: str
-    args: List[Any]
 
 
 @app.post('/create')
 async def create(task_body: TaskBody) -> Any:
-    task = Task(task_body.name, task_body.args)
-    crown.queue.put_task(task)
+    crown.create_and_queue_task(task_body)
 
     return {'success': True}
 
@@ -39,8 +34,9 @@ async def processing() -> Set[Task]:
 
 @app.on_event('startup')
 async def work() -> None:
-    asyncio.create_task(worker())
-    asyncio.create_task(worker())
+    for queue_name in crown.queues.keys():
+        asyncio.create_task(worker(queue_name))
+        asyncio.create_task(worker(queue_name))
 
 
 @crown.task('add')
@@ -49,10 +45,13 @@ async def add(a: int, b: int) -> int:
     return a + b
 
 
-@crown.task('square')
+@crown.task('square', queue_name='square_queue')
 async def square(a: int) -> int:
     total = 0
     for _ in range(a):
         total = await add.get(total, a)
 
     return abs(total)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host='0.0.0.0', port=5000)
