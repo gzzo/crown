@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import Any, List
+from typing import Any, List, Set
 from structlog import get_logger
 
 from .crown import Crown
@@ -32,6 +32,11 @@ async def create(task_body: TaskBody) -> Any:
     return {'success': True}
 
 
+@app.get('/processing')
+async def processing() -> Set[Task]:
+    return crown.queue.active
+
+
 @app.on_event('startup')
 async def work() -> None:
     asyncio.create_task(worker())
@@ -40,6 +45,7 @@ async def work() -> None:
 
 @crown.task('add')
 async def add(a: int, b: int) -> int:
+    await asyncio.sleep(10)
     return a + b
 
 
