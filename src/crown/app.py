@@ -1,5 +1,5 @@
 import asyncio
-import uvicorn
+import uvicorn  # type: ignore
 from fastapi import FastAPI
 from typing import Any, Set
 from structlog import get_logger

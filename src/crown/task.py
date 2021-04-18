@@ -3,7 +3,7 @@ from typing import Iterable, Any
 from uuid import uuid4
 from structlog import get_logger
 
-from .types import QueueName, QueueNameType
+from .types import DEFAULT_QUEUE
 
 log = get_logger()
 
@@ -16,7 +16,7 @@ class TaskStatus(enum.Enum):
 
 
 class Task(object):
-    def __init__(self, name: str, args: Iterable[Any], queue_name: QueueNameType = QueueName.DEFAULT) -> None:
+    def __init__(self, name: str, args: Iterable[Any], queue_name: str = DEFAULT_QUEUE) -> None:
         self.name = name
         self.args = args
         self.id = str(uuid4())

@@ -3,13 +3,13 @@ from structlog import get_logger
 from typing import Set, Coroutine
 
 from .task import Task, TaskStatus
-from .types import Results, QueueName, QueueNameType
+from .types import Results, DEFAULT_QUEUE
 
 log = get_logger()
 
 
 class TaskQueue(object):
-    def __init__(self, results: Results, name: QueueNameType = QueueName.DEFAULT) -> None:
+    def __init__(self, results: Results, name: str = DEFAULT_QUEUE) -> None:
         self.results = results
         self.name = name
 

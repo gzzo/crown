@@ -1,11 +1,10 @@
 from typing import Callable, Any, Dict
 from structlog import get_logger
-from collections import defaultdict
 
 from .handler import TaskHandler
 from .queue import TaskQueue
 from .task import Task, TaskStatus
-from .types import Tasks, Results, QueueName, QueueNameType, TaskBody
+from .types import Tasks, Results, TaskBody, DEFAULT_QUEUE
 
 log = get_logger()
 
@@ -14,10 +13,10 @@ class Crown(object):
     def __init__(self) -> None:
         self.tasks: Tasks = {}
         self.results: Results = {}
-        self.queues: Dict[QueueNameType, TaskQueue] = {QueueName.DEFAULT: TaskQueue(self.results)}
-        self.queue = self.queues[QueueName.DEFAULT]
+        self.queues: Dict[str, TaskQueue] = {DEFAULT_QUEUE: TaskQueue(self.results)}
+        self.queue = self.queues[DEFAULT_QUEUE]
 
-    def task(self, name: str, queue_name: QueueNameType = QueueName.DEFAULT) -> Callable[[Callable], TaskHandler]:
+    def task(self, name: str, queue_name: str = DEFAULT_QUEUE) -> Callable[[Callable], TaskHandler]:
         def decorator(func: Callable) -> TaskHandler:
             if queue_name not in self.queues:
                 self.queues[queue_name] = TaskQueue(self.results, name=queue_name)
